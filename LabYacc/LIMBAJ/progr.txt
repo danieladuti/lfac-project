@@ -1,0 +1,28 @@
+int x679;
+int x;
+int g(int x, float f);
+float fl;
+int g(int x, float f);
+int g(int x, float f) 
+{ 
+    int x=2; 
+    return x; 
+}
+begin_progr 
+y = x ;
+x=y;
+x=345 + y * 56 + 7;
+g(23,243,345);
+k();
+f(x+2);
+int x = 45;
+int v = y;
+int c[100] = {1,2};
+int v[] = {1};
+int r;
+float *h;
+int t,s;
+int t,s,d,f;
+string s;
+return 0;
+end_progr
