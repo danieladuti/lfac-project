@@ -66,6 +66,7 @@ list :  statement ';'
 
 statement: func_call
          | ID ASSIGN e
+         | ID '[' NR ']' ASSIGN e
          | TYPE ID ASSIGN e
          | return_net
          | array
@@ -81,6 +82,11 @@ func_call : ID '(' call_list ')'
 
 control_s : CTRL '(' bool_e ')' '{' list '}' 
           | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
+          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
+          | CTRL1 '(' ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
+          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ')' '{' list '}'
+          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ')' '{' list '}'
+          | CTRL1 '(' ';' bool_e ';'')' '{' list '}'
           ;
 
 array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}'
@@ -98,6 +104,7 @@ e : e '+' e
   | e '-' e
   | NR 
   | ID 
+  | ID '[' NR ']'
   | ADEVARAT
   | FALS
   ;
@@ -107,6 +114,8 @@ bool_e : e COMPARE e
            
 call_list : call_list ',' e
            | e
+           | func_call
+           | call_list ',' func_call
            | /*epsilon*/
            ;
 %%
