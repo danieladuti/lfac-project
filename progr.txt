@@ -8,7 +8,7 @@ int g(int x, float f)
 }
 
 begin_progr 
-x = 45;
+int x = 45;
 int v = y;
 y = x ;
 x=y;
@@ -22,6 +22,10 @@ int r;
 float *h;
 string s;
 return 0;
+a[2] = 5;
+a[6] = b[3];
+f(g(2), x, x * y);
+Print(expr);
 if(x*8 >= 2+2)
 {
     t=6;
@@ -30,7 +34,7 @@ while(i<9)
 {
     w=p;
 }
-for(i=1;i<9;i=i+1)
+for(;i<9;)
 {
     i=p;
 }
