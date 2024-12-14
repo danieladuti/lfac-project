@@ -14,8 +14,8 @@ int errorCount = 0;
 %union {
      char* string;
 }
-%token  BGIN END ASSIGN NR COMPARE
-%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS  
+%token  BGIN ASSIGN NR COMPARE
+%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS
 %start progr
 
 %left COMPARE
@@ -30,7 +30,8 @@ progr :  declarations main {if (errorCount == 0) cout<< "The program is correct!
 declarations : decl
            | decl_func
 	      | declarations decl
-           | declarations decl_func    
+           | declarations decl_func   
+           | declarations decl_class
 	      ;
 
 decl       :  TYPE ID ';' { 
@@ -48,13 +49,33 @@ decl_func : TYPE ID  '(' list_param ')' '{' list '}'
 
 list_param : param
             | list_param ','  param 
+            | /*epsilon*/
             ;
             
 param : TYPE ID 
       ; 
       
+decl_class : CLASS ID '{' list_c '}'
+           ;
 
-main : BGIN list END  
+list_c : list_c TYPE_CLASS ':' 
+       | list_c statement_class ';'
+       | statement_class ';'
+       | decl_func
+       | list_c decl_func
+       | ID'('')' '{' list '}'
+       | list_c ID'('')' '{' list '}'
+       | list_c '~'ID'('')' '{' list '}'
+       | '~'ID'('')' '{' list '}'
+       ;
+
+statement_class : TYPE ID ASSIGN e
+                | array
+                | TYPE ID 
+                | ID '[' NR ']' ASSIGN e
+                ;
+
+main : BGIN '(' list_param ')' '{' list '}' 
      ;
      
 
@@ -66,11 +87,14 @@ list :  statement ';'
 
 statement: func_call
          | ID ASSIGN e
-         | ID '[' NR ']' ASSIGN e
          | TYPE ID ASSIGN e
+         | ID '[' NR ']' ASSIGN e
          | return_net
          | array
          | TYPE ID
+         | ID ID
+         | ID'.'ID ASSIGN e
+         | ID'.'func_call
          ;
 
 return_net: RET ID
@@ -91,6 +115,7 @@ control_s : CTRL '(' bool_e ')' '{' list '}'
 
 array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}'
       | TYPE ID '['']' ASSIGN '{' nr_list '}'
+      | TYPE ID '[' NR ']'
       | TYPE '*' ID
       ;
 
@@ -102,11 +127,12 @@ e : e '+' e
   | e '*' e   
   | e '/' e
   | e '-' e
+  | ID '[' NR ']'
   | NR 
   | ID 
-  | ID '[' NR ']'
   | ADEVARAT
   | FALS
+  | ID'.'ID
   ;
 
 bool_e : e COMPARE e
@@ -118,6 +144,7 @@ call_list : call_list ',' e
            | call_list ',' func_call
            | /*epsilon*/
            ;
+
 %%
 void yyerror(const char * s){
      cout << "error:" << s << " at line: " << yylineno << endl;
