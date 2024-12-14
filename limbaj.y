@@ -1,3 +1,4 @@
+
 %{
 #include <iostream>
 #include <vector>
@@ -13,8 +14,8 @@ int errorCount = 0;
 %union {
      char* string;
 }
-%token  BGIN END ASSIGN NR 
-%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS COMPARE 
+%token  BGIN END ASSIGN NR COMPARE
+%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS  
 %start progr
 
 %left COMPARE
@@ -59,14 +60,16 @@ main : BGIN list END
 
 list :  statement ';' 
      | list statement ';'
+     | control_s
+     | list control_s
      ;
 
 statement: func_call
-         | atribuire 
+         | ID ASSIGN e
+         | TYPE ID ASSIGN e
          | return_net
          | array
          | TYPE ID
-         | control_s
          ;
 
 return_net: RET ID
@@ -76,12 +79,8 @@ return_net: RET ID
 func_call : ID '(' call_list ')'
           ;
 
-atribuire : ID ASSIGN e
-          | TYPE ID ASSIGN e
-          ;  
-
-control_s : CTRL '(' bool_e ')' '{' statement '}'
-          | CTRL1 '(' atribuire ';' bool_e ';' atribuire ')' '{' statement '}'
+control_s : CTRL '(' bool_e ')' '{' list '}' 
+          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
           ;
 
 array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}'
@@ -97,14 +96,13 @@ e : e '+' e
   | e '*' e   
   | e '/' e
   | e '-' e
-  | e COMPARE e
   | NR 
   | ID 
-  | bool_e
+  | ADEVARAT
+  | FALS
   ;
 
-bool_e : ADEVARAT
-       | FALS
+bool_e : e COMPARE e
        ;
            
 call_list : call_list ',' e

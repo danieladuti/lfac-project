@@ -5,10 +5,10 @@
 %option noyywrap
 %%
 "int"|"float"|"char"|"string"|"bool"|"vector" {yylval.string = strdup(yytext);return TYPE;}
+"=="|">="|"<="|"!="|"<"|">" {return COMPARE;}
 "if"|"while" {return CTRL;}
 "for" {return CTRL1;}
 "return" {return RET;}
-"==" | ">=" | "=<" | "!=" | "<" | ">" {return COMPARE;}
 "true" {return ADEVARAT;}
 "false" {return FALS;}
 "begin_progr" {return BGIN;}
