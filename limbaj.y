@@ -14,10 +14,12 @@ int errorCount = 0;
 %union {
      char* string;
 }
-%token  BGIN ASSIGN NR COMPARE
-%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS
+%token  BGIN ASSIGN NR COMPARE COMPARE_SI COMPARE_SAU
+%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS 
 %start progr
 
+%left COMPARE_SAU
+%left COMPARE_SI
 %left COMPARE
 %left '+' '-' 
 %left '*' '/' 
@@ -123,10 +125,10 @@ nr_list : nr_list ',' NR
         | NR
         ;
 
-e : e '+' e   
+e : e '+' e  
+  | e '-' e 
   | e '*' e   
   | e '/' e
-  | e '-' e
   | ID '[' NR ']'
   | NR 
   | ID 
@@ -136,6 +138,8 @@ e : e '+' e
   ;
 
 bool_e : e COMPARE e
+       | bool_e COMPARE_SI e COMPARE e
+       | bool_e COMPARE_SAU e COMPARE e
        ;
            
 call_list : call_list ',' e

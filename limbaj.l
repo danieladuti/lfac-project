@@ -6,6 +6,8 @@
 %%
 "int"|"float"|"char"|"string"|"bool"|"vector" {yylval.string = strdup(yytext);return TYPE;}
 "=="|">="|"<="|"!="|"<"|">" {return COMPARE;}
+"||" {return COMPARE_SAU;}
+"&&" {return COMPARE_SI;}
 "class" {return CLASS;}
 "private"|"protected"|"public" {return TYPE_CLASS;}
 "if"|"while" {return CTRL;}
