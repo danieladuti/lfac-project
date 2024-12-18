@@ -6,8 +6,8 @@
 %%
 "int"|"float"|"char"|"string"|"bool"|"vector" {yylval.string = strdup(yytext);return TYPE;}
 "=="|">="|"<="|"!="|"<"|">" {return COMPARE;}
-"||" {return COMPARE_SAU;}
-"&&" {return COMPARE_SI;}
+"||" {return SAU;}
+"&&" {return SI;}
 "class" {return CLASS;}
 "private"|"protected"|"public" {return TYPE_CLASS;}
 "if"|"while" {return CTRL;}
@@ -17,8 +17,11 @@
 "false" {return FALS;}
 "int main" {return BGIN;}
 [0-9]*[a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
+\"(\\.|[^"\\])*\" {return TEXT;}
+\'(\\.|[^"\\])\' {return CARACTER;}
 "=" {return ASSIGN;}
 [0-9]+ {return NR;}
+[0-9]+[.][0-9]+ {return NR_FLOAT;}
 
 [ \t] ;
 \n {yylineno++;}

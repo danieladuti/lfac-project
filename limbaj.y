@@ -14,12 +14,12 @@ int errorCount = 0;
 %union {
      char* string;
 }
-%token  BGIN ASSIGN NR COMPARE COMPARE_SI COMPARE_SAU
+%token  BGIN ASSIGN NR COMPARE SI SAU TEXT CARACTER NR_FLOAT
 %token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS 
 %start progr
 
-%left COMPARE_SAU
-%left COMPARE_SI
+%left SAU
+%left SI
 %left COMPARE
 %left '+' '-' 
 %left '*' '/' 
@@ -31,6 +31,7 @@ progr :  declarations main {if (errorCount == 0) cout<< "The program is correct!
 
 declarations : decl
            | decl_func
+           | decl_class
 	      | declarations decl
            | declarations decl_func   
            | declarations decl_class
@@ -49,14 +50,6 @@ decl       :  TYPE ID ';' {
 decl_func : TYPE ID  '(' list_param ')' '{' list '}'
           ;
 
-list_param : param
-            | list_param ','  param 
-            | /*epsilon*/
-            ;
-            
-param : TYPE ID 
-      ; 
-      
 decl_class : CLASS ID '{' list_c '}'
            ;
 
@@ -77,6 +70,14 @@ statement_class : TYPE ID ASSIGN e
                 | ID '[' NR ']' ASSIGN e
                 ;
 
+list_param : param
+            | list_param ','  param 
+            | /*epsilon*/
+            ;
+            
+param : TYPE ID 
+      ; 
+
 main : BGIN '(' list_param ')' '{' list '}' 
      ;
      
@@ -90,13 +91,20 @@ list :  statement ';'
 statement: func_call
          | ID ASSIGN e
          | TYPE ID ASSIGN e
+         | TYPE ID ASSIGN bool_e
+         | TYPE ID ASSIGN TEXT
+         | TYPE ID ASSIGN CARACTER
          | ID '[' NR ']' ASSIGN e
+         | ID '[' NR ']' ASSIGN bool_e
+         | ID '[' NR ']' ASSIGN TEXT
+         | ID '[' NR ']' ASSIGN CARACTER
+         | ID ASSIGN TEXT
+         | ID ASSIGN CARACTER
          | return_net
          | array
          | TYPE ID
          | ID ID
          | ID'.'ID ASSIGN e
-         | ID'.'func_call
          ;
 
 return_net: RET ID
@@ -104,6 +112,7 @@ return_net: RET ID
           ;
 
 func_call : ID '(' call_list ')'
+          | ID'.'func_call
           ;
 
 control_s : CTRL '(' bool_e ')' '{' list '}' 
@@ -125,12 +134,22 @@ nr_list : nr_list ',' NR
         | NR
         ;
 
-e : e '+' e  
+e : e '+' e 
   | e '-' e 
   | e '*' e   
   | e '/' e
+  | e '+' func_call
+  | func_call '+' e
+  | e '-' func_call
+  | func_call '-' e 
+  | e '*' func_call 
+  | func_call '*' e  
+  | e '/' func_call    
+  | func_call '/' e
+  | '(' e ')'
   | ID '[' NR ']'
-  | NR 
+  | NR
+  | NR_FLOAT 
   | ID 
   | ADEVARAT
   | FALS
@@ -138,8 +157,9 @@ e : e '+' e
   ;
 
 bool_e : e COMPARE e
-       | bool_e COMPARE_SI e COMPARE e
-       | bool_e COMPARE_SAU e COMPARE e
+       | bool_e SI bool_e
+       | bool_e SAU bool_e
+       | '(' bool_e ')'
        ;
            
 call_list : call_list ',' e
