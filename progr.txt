@@ -90,5 +90,12 @@ for(;i<9;)
     i=p;
 }
 
+if(c*2-h>0 || y==h && j<=7)
+{
+    u=2;
+}
+
+Print(x+2);
+TypeOf(var);
 
 }
