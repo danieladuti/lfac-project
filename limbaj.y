@@ -1,7 +1,7 @@
 
 %{
 #include <iostream>
-#include <vector>
+#include <string>
 #include "SymTable.h"
 extern FILE* yyin;
 extern char* yytext;
@@ -38,19 +38,16 @@ declarations : decl
 	      ;
 
 decl       :  TYPE ID ';' { 
-                              if(!current->existsId($2)) {
-                                    current->addVar($1,$2);
-                              } else {
-                                   errorCount++; 
-                                   yyerror("Variable already defined");
-                              }
+                              current->addVar($1, $2, current->name);
                           }
            ;
 
-decl_func : TYPE ID  '(' list_param ')' '{' list '}'
+decl_func : TYPE ID { 
+                         current->addFuncNoClass($1, $2, current->name);
+                    }  '(' list_param ')' { /*current = new SymTable($2, current);*/ } '{' list '}' 
           ;
 
-decl_class : CLASS ID '{' list_c '}'
+decl_class : CLASS ID { current->addClass($2); } '{' list_c '}'
            ;
 
 list_c : list_c TYPE_CLASS ':' 
@@ -75,7 +72,10 @@ list_param : param
             | /*epsilon*/
             ;
             
-param : TYPE ID 
+param : TYPE ID { /*current->ids[nume_functie].params.addParam($1, $2);
+                    de gasit un mod de a accesa numele functiei la care trebuie adaugati parametri
+                    */               
+                }
       ; 
 
 main : BGIN '(' list_param ')' '{' list '}' 
@@ -178,7 +178,7 @@ int main(int argc, char** argv){
      yyin=fopen(argv[1],"r");
      current = new SymTable("global");
      yyparse();
-     cout << "Variables:" <<endl;
+     cout << "Variables:" << endl;
      current->printVars();
      delete current;
 } 
