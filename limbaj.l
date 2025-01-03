@@ -13,15 +13,15 @@
 "if"|"while" {return CTRL;}
 "for" {return CTRL1;}
 "return" {return RET;}
-"true" {return ADEVARAT;}
-"false" {return FALS;}
+"true" {yylval.string = strdup(yytext); return ADEVARAT;}
+"false" {yylval.string = strdup(yytext); return FALS;}
 "int main" {return BGIN;}
 [0-9]*[a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
-\"(\\.|[^"\\])*\" {return TEXT;}
-\'(\\.|[^"\\])\' {return CARACTER;}
+\"(\\.|[^"\\])*\" {yylval.string = strdup(yytext); return TEXT;}
+\'(\\.|[^"\\])\' {yylval.string = strdup(yytext); return CARACTER;}
 "=" {return ASSIGN;}
-[0-9]+ {return NR;}
-[0-9]+[.][0-9]+ {return NR_FLOAT;}
+[0-9]+ {yylval.string = strdup(yytext); return NR;}
+[0-9]+[.][0-9]+ {yylval.string = strdup(yytext); return NR_FLOAT;}
 
 [ \t] ;
 \n {yylineno++;}

@@ -2,6 +2,7 @@
 using namespace std;
 
 vector<SymTable*> tabels;
+string nume;
 
 SymTable::SymTable(string name)
 {
@@ -21,25 +22,35 @@ void ParamList::addParam(string type, string name)
     parametri.push_back({type, name});
 }
 
-void SymTable::addVar(string type, string name, string domain_name) {
-    name += " ";
-    name += domain_name;
+void SymTable::addVar(string type, string name, int size, string domain_name) 
+{
+    nume = name;
     IdInfo var(type, name, "var");
+    if(size != 0)
+    {
+        var.size = size;
+        if(type == "bool")
+            var.bool_val.resize(size);
+        else if(type == "char" || type == "string")
+            var.text.resize(size);
+        else if(type == "int")
+            var.int_val.resize(size);
+        else if(type == "float")
+            var.float_val.resize(size);
+    }
     ids[name] = var;
 }
 
 void SymTable::addFuncNoClass(string type, string name, string domain_name)
 {
-    name += " ";
-    name += domain_name;
+    nume = name;
     IdInfo func(type, name, "func");
     ids[name] = func;
 }
 
 void SymTable::addFunc(string type, string name, string class_name, string domain_name)
 {
-    name += " ";
-    name += domain_name;
+    nume = name;
     IdInfo func(type, name, "func", class_name);
     ids[name] = func;
 }
@@ -55,9 +66,13 @@ void SymTable::addClass(string name)
     return ids.find(var)!= ids.end();  
 }*/
 
-void SymTable::printVars() {
+void SymTable::printVars() 
+{
     for (pair<string, IdInfo> v : ids) {
-        cout << v.second.idType << " name: " << v.first << " type:" << v.second.type << endl;
+        cout << v.second.idType << " name: " << v.first << " type:" << v.second.type;
+        if(v.second.idType != "func" && v.second.idType != "clasa")
+            cout << " " << v.second.size; 
+        cout << "\n";
         if(v.second.idType == "func")
         {
             cout << "Parametri:\n";
@@ -68,7 +83,8 @@ void SymTable::printVars() {
      }
 }
 
-SymTable::~SymTable() {
+SymTable::~SymTable() 
+{
     ids.clear();
 }
 

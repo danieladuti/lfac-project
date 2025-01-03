@@ -14,8 +14,8 @@ int errorCount = 0;
 %union {
      char* string;
 }
-%token  BGIN ASSIGN NR COMPARE SI SAU TEXT CARACTER NR_FLOAT
-%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS 
+%token BGIN ASSIGN COMPARE SI SAU CARACTER
+%token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS NR NR_FLOAT TEXT 
 %start progr
 
 %left SAU
@@ -38,16 +38,20 @@ declarations : decl
 	      ;
 
 decl       :  TYPE ID ';' { 
-                              current->addVar($1, $2, current->name);
+                              current->addVar($1, $2, 1, current->name);
                           }
            ;
 
-decl_func : TYPE ID { 
-                         current->addFuncNoClass($1, $2, current->name);
-                    }  '(' list_param ')' { /*current = new SymTable($2, current);*/ } '{' list '}' 
+decl_func : TYPE ID {
+                         if(current->name != "global")
+                              current->addFunc($1, $2, current->name, current->name);
+                         else
+                              current->addFuncNoClass($1, $2, current->name);
+                    }  '(' list_param ')' { nume = ""; current = new SymTable($2, current); } 
+                    '{' list '}' { current = current->prev; }
           ;
 
-decl_class : CLASS ID { current->addClass($2); } '{' list_c '}'
+decl_class : CLASS ID { current->addClass($2); current = new SymTable($2, current); } '{' list_c '}' { current = current->prev; }
            ;
 
 list_c : list_c TYPE_CLASS ':' 
@@ -61,9 +65,9 @@ list_c : list_c TYPE_CLASS ':'
        | '~'ID'('')' '{' list '}'
        ;
 
-statement_class : TYPE ID ASSIGN e
+statement_class : TYPE ID ASSIGN e { current->addVar($1, $2, 1, current->name); }
                 | array
-                | TYPE ID 
+                | TYPE ID { current->addVar($1, $2, 1, current->name); }
                 | ID '[' NR ']' ASSIGN e
                 ;
 
@@ -72,13 +76,12 @@ list_param : param
             | /*epsilon*/
             ;
             
-param : TYPE ID { /*current->ids[nume_functie].params.addParam($1, $2);
-                    de gasit un mod de a accesa numele functiei la care trebuie adaugati parametri
-                    */               
-                }
+param : TYPE ID { current->ids[nume].params.addParam($1, $2); }
       ; 
 
-main : BGIN '(' list_param ')' '{' list '}' 
+main : BGIN { current->addFuncNoClass("int", "main", current->name); }  
+       '(' list_param ')' { nume = ""; current = new SymTable("main", current); } 
+       '{' list '}' { current = current->prev; } 
      ;
      
 
@@ -90,10 +93,10 @@ list :  statement ';'
 
 statement: func_call
          | ID ASSIGN e
-         | TYPE ID ASSIGN e
-         | TYPE ID ASSIGN bool_e
-         | TYPE ID ASSIGN TEXT
-         | TYPE ID ASSIGN CARACTER
+         | TYPE ID ASSIGN e { current->addVar($1, $2, 1, current->name); }
+         | TYPE ID ASSIGN bool_e { current->addVar($1, $2, 1, current->name); }
+         | TYPE ID ASSIGN TEXT { current->addVar($1, $2, 1, current->name); }
+         | TYPE ID ASSIGN CARACTER { current->addVar($1, $2, 1, current->name); }
          | ID '[' NR ']' ASSIGN e
          | ID '[' NR ']' ASSIGN bool_e
          | ID '[' NR ']' ASSIGN TEXT
@@ -102,8 +105,8 @@ statement: func_call
          | ID ASSIGN CARACTER
          | return_net
          | array
-         | TYPE ID
-         | ID ID
+         | TYPE ID { current->addVar($1, $2, 1, current->name); }
+         | ID ID { current->addVar($1, $2, 1, current->name); }
          | ID'.'ID ASSIGN e
          ;
 
@@ -124,14 +127,14 @@ control_s : CTRL '(' bool_e ')' '{' list '}'
           | CTRL1 '(' ';' bool_e ';'')' '{' list '}'
           ;
 
-array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}'
-      | TYPE ID '['']' ASSIGN '{' nr_list '}'
-      | TYPE ID '[' NR ']'
+array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}' { current->addVar($1, $2, stoi($4), current->name); } 
+      | TYPE ID '['']' ASSIGN { current->addVar($1, $2, 0, current->name); } '{' nr_list '}' { current->ids[nume].size = current->ids[nume].int_val.size(); }
+      | TYPE ID '[' NR ']' { current->addVar($1, $2, stoi($4), current->name); }
       | TYPE '*' ID
       ;
 
 nr_list : nr_list ',' NR
-        | NR
+        | NR { current->ids[nume].int_val.push_back(stoi($1)); }
         ;
 
 e : e '+' e 
@@ -148,9 +151,23 @@ e : e '+' e
   | func_call '/' e
   | '(' e ')'
   | ID '[' NR ']'
-  | NR
-  | NR_FLOAT 
-  | ID 
+  | NR { /*current->ids[nume].int_val[0] = stoi($1);*/ }
+  | NR_FLOAT { /*current->ids[nume].float_val[0] = stof($1);*/ }
+  | ID    { 
+               /*SymTable* search = current;
+               while(search->ids[$1].idType == "" || search->name == "global")
+                    search = search->prev;
+               //daca nu e nici in global de adaugat eroare sintactica
+               if(current->ids[nume].idType == "int")
+                    current->ids[nume].int_val = search->ids[$1].int_val;
+               else if(current->ids[nume].idType == "string" || current->ids[nume].idType == "char")
+                    current->ids[nume].text = search->ids[$1].text;
+               else if(current->ids[nume].idType == "bool")
+                    current->ids[nume].bool_val = search->ids[$1].bool_val;
+               else if(current->ids[nume].idType == "float")
+                    current->ids[nume].float_val = search->ids[$1].float_val;
+               //else current->ids[nume].params.parametri = search->ids[$1].params.parametri;*/
+          }
   | ADEVARAT
   | FALS
   | ID'.'ID
@@ -179,6 +196,11 @@ int main(int argc, char** argv){
      current = new SymTable("global");
      yyparse();
      cout << "Variables:" << endl;
-     current->printVars();
+     for(auto x : tabels)
+     {
+          cout << "Nume scop:" << x->name << "\n";
+          x->printVars();
+          cout << "\n";
+     }
      delete current;
 } 
