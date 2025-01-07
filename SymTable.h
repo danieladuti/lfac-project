@@ -3,8 +3,11 @@
 #include <string>
 #include <list>
 #include <vector>
+#include <fstream>
 
 using namespace std;
+
+extern ofstream fout;
 
 class ParamList {
     public:
@@ -50,6 +53,7 @@ class SymTable {
     void addFunc(string type, string name, string class_name, string domain_name);
     void addClass(string name);
     void printVars();
+    void printVarstoFile();
     ~SymTable();
 };
 

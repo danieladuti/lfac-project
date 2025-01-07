@@ -118,19 +118,19 @@ func_call : ID '(' call_list ')'
           | ID'.'func_call
           ;
 
-control_s : CTRL '(' bool_e ')' '{' list '}' 
-          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
-          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
-          | CTRL1 '(' ';' bool_e ';' ID ASSIGN e ')' '{' list '}'
-          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ')' '{' list '}'
-          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ')' '{' list '}'
-          | CTRL1 '(' ';' bool_e ';'')' '{' list '}'
+control_s : CTRL '(' bool_e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); current->addVar($3, $4, 1, current->name); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ')' { current = new SymTable("block", current); current->addVar($3, $4, 1, current->name); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ';' bool_e ';'')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
           ;
 
 array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}' { current->addVar($1, $2, stoi($4), current->name); } 
       | TYPE ID '['']' ASSIGN { current->addVar($1, $2, 0, current->name); } '{' nr_list '}' { current->ids[nume].size = current->ids[nume].int_val.size(); }
       | TYPE ID '[' NR ']' { current->addVar($1, $2, stoi($4), current->name); }
-      | TYPE '*' ID
+      | TYPE '*' ID { current->addVar($1, $3, 0, current->name); }
       ;
 
 nr_list : nr_list ',' NR
@@ -201,6 +201,13 @@ int main(int argc, char** argv){
           cout << "Nume scop:" << x->name << "\n";
           x->printVars();
           cout << "\n";
+          if(x->name != "block")
+          {
+               fout << "Nume scop:" << x->name << "\n";
+               x->printVarstoFile();
+               fout << "\n";
+          }
      }
+
      delete current;
 } 

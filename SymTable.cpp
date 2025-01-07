@@ -1,6 +1,8 @@
 #include "SymTable.h"
 using namespace std;
 
+ofstream fout("SymTables.txt");
+
 vector<SymTable*> tabels;
 string nume;
 
@@ -79,6 +81,23 @@ void SymTable::printVars()
             for(pair<string, string> x : v.second.params.parametri)
                 cout << x.first << " " << x.second << " ";
             cout << "\n";
+        } 
+     }
+}
+
+void SymTable::printVarstoFile()
+{
+    for (pair<string, IdInfo> v : ids) {
+        fout << v.second.idType << " name: " << v.first << " type:" << v.second.type;
+        if(v.second.idType != "func" && v.second.idType != "clasa")
+            fout << " " << v.second.size; 
+        fout << "\n";
+        if(v.second.idType == "func")
+        {
+            fout << "Parametri:\n";
+            for(pair<string, string> x : v.second.params.parametri)
+                fout << x.first << " " << x.second << " ";
+            fout << "\n";
         } 
      }
 }
