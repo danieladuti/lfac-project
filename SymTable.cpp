@@ -24,7 +24,7 @@ void ParamList::addParam(string type, string name)
     parametri.push_back({type, name});
 }
 
-void SymTable::addVar(string type, string name, int size, string domain_name) 
+void SymTable::addVar(string type, string name, int size) 
 {
     nume = name;
     IdInfo var(type, name, "var");
@@ -43,14 +43,14 @@ void SymTable::addVar(string type, string name, int size, string domain_name)
     ids[name] = var;
 }
 
-void SymTable::addFuncNoClass(string type, string name, string domain_name)
+void SymTable::addFuncNoClass(string type, string name)
 {
     nume = name;
     IdInfo func(type, name, "func");
     ids[name] = func;
 }
 
-void SymTable::addFunc(string type, string name, string class_name, string domain_name)
+void SymTable::addFunc(string type, string name, string class_name)
 {
     nume = name;
     IdInfo func(type, name, "func", class_name);
@@ -100,6 +100,27 @@ void SymTable::printVarstoFile()
             fout << "\n";
         } 
      }
+}
+
+bool SymTable::existsId(string name, string idType)
+{
+    map<string, IdInfo>::iterator it;
+    for(it = ids.begin(); it != ids.end(); ++it)
+        if(it->first == name && it->second.idType == idType)
+            return true;
+    return false;
+}
+
+bool VerifId(string name, string idType, SymTable* current)
+{
+    SymTable* copy_current = current; 
+    while(!copy_current->existsId(name, idType)) 
+    {
+        if(copy_current->name == "global")
+            return false;
+        copy_current = copy_current->prev;
+    } 
+    return true;
 }
 
 SymTable::~SymTable() 

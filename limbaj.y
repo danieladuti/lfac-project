@@ -38,15 +38,15 @@ declarations : decl
 	      ;
 
 decl       :  TYPE ID ';' { 
-                              current->addVar($1, $2, 1, current->name);
+                              current->addVar($1, $2, 1);
                           }
            ;
 
 decl_func : TYPE ID {
                          if(current->name != "global")
-                              current->addFunc($1, $2, current->name, current->name);
+                              current->addFunc($1, $2, current->name);
                          else
-                              current->addFuncNoClass($1, $2, current->name);
+                              current->addFuncNoClass($1, $2);
                     }  '(' list_param ')' { nume = ""; current = new SymTable($2, current); } 
                     '{' list '}' { current = current->prev; }
           ;
@@ -65,9 +65,9 @@ list_c : list_c TYPE_CLASS ':'
        | '~'ID'('')' '{' list '}'
        ;
 
-statement_class : TYPE ID ASSIGN e { current->addVar($1, $2, 1, current->name); }
+statement_class : TYPE ID ASSIGN e { current->addVar($1, $2, 1); }
                 | array
-                | TYPE ID { current->addVar($1, $2, 1, current->name); }
+                | TYPE ID { current->addVar($1, $2, 1); }
                 | ID '[' NR ']' ASSIGN e
                 ;
 
@@ -79,7 +79,7 @@ list_param : param
 param : TYPE ID { current->ids[nume].params.addParam($1, $2); }
       ; 
 
-main : BGIN { current->addFuncNoClass("int", "main", current->name); }  
+main : BGIN { current->addFuncNoClass("int", "main"); }  
        '(' list_param ')' { nume = ""; current = new SymTable("main", current); } 
        '{' list '}' { current = current->prev; } 
      ;
@@ -92,45 +92,132 @@ list :  statement ';'
      ;
 
 statement: func_call
-         | ID ASSIGN e
-         | TYPE ID ASSIGN e { current->addVar($1, $2, 1, current->name); }
-         | TYPE ID ASSIGN bool_e { current->addVar($1, $2, 1, current->name); }
-         | TYPE ID ASSIGN TEXT { current->addVar($1, $2, 1, current->name); }
-         | TYPE ID ASSIGN CARACTER { current->addVar($1, $2, 1, current->name); }
-         | ID '[' NR ']' ASSIGN e
-         | ID '[' NR ']' ASSIGN bool_e
-         | ID '[' NR ']' ASSIGN TEXT
-         | ID '[' NR ']' ASSIGN CARACTER
-         | ID ASSIGN TEXT
-         | ID ASSIGN CARACTER
+         | ID ASSIGN e { 
+                         if(!VerifId($1, "var", current))
+                         {
+                              errorCount++;
+                              yyerror("Variable is not defined");
+                         }
+                       }
+         | TYPE ID ASSIGN e { current->addVar($1, $2, 1); }
+         | TYPE ID ASSIGN bool_e { current->addVar($1, $2, 1); }
+         | TYPE ID ASSIGN TEXT { current->addVar($1, $2, 1); }
+         | TYPE ID ASSIGN CARACTER { current->addVar($1, $2, 1); }
+         | ID '[' NR ']' ASSIGN e { 
+                                   if(!VerifId($1, "var", current))
+                                   {
+                                        errorCount++;
+                                        yyerror("Variable is not defined");
+                                   }
+                                  }
+         | ID '[' NR ']' ASSIGN bool_e {
+                                        if(!VerifId($1, "var", current))
+                                        {
+                                             errorCount++;
+                                             yyerror("Variable is not defined");
+                                        }
+                                       }
+         | ID '[' NR ']' ASSIGN TEXT {  
+                                        if(!VerifId($1, "var", current))
+                                        {
+                                             errorCount++;
+                                             yyerror("Variable is not defined");
+                                        }
+                                     }
+         | ID '[' NR ']' ASSIGN CARACTER { 
+                                           if(!VerifId($1, "var", current))
+                                           {
+                                                errorCount++;
+                                                yyerror("Variable is not defined");
+                                           }
+                                        }
+         | ID ASSIGN TEXT { 
+                            if(!VerifId($1, "var", current))
+                            {
+                                 errorCount++;
+                                 yyerror("Variable is not defined");
+                            }
+                          }
+         | ID ASSIGN CARACTER { 
+                                if(!VerifId($1, "var", current))
+                                {
+                                     errorCount++;
+                                     yyerror("Variable is not defined");
+                                }
+                              }
          | return_net
          | array
-         | TYPE ID { current->addVar($1, $2, 1, current->name); }
-         | ID ID { current->addVar($1, $2, 1, current->name); }
-         | ID'.'ID ASSIGN e
+         | TYPE ID { current->addVar($1, $2, 1); }
+         | ID ID { current->addVar($1, $2, 1); }
+         | ID'.'ID ASSIGN e { 
+                              if(!VerifId($3, "var", current))
+                              {
+                                   errorCount++;
+                                   yyerror("Variable is not defined");
+                              }
+                            }
          ;
 
-return_net: RET ID
+return_net: RET ID { 
+                     if(!VerifId($2, "var", current))
+                     {
+                          errorCount++;
+                          yyerror("Variable is not defined");
+                     }
+                   }
           | RET NR
           ;
 
-func_call : ID '(' call_list ')'
+func_call : ID '(' call_list ')' { 
+                                   if(!VerifId($1, "func", current))
+                                   {
+                                        errorCount++;
+                                        yyerror("Function is not defined");
+                                   }
+                                 }
           | ID'.'func_call
           ;
 
 control_s : CTRL '(' bool_e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
-          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
-          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); current->addVar($3, $4, 1, current->name); } '{' list '}' { current = current->prev; }
-          | CTRL1 '(' ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
-          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
-          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ')' { current = new SymTable("block", current); current->addVar($3, $4, 1, current->name); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' 
+          { 
+               if(!VerifId($3, "var", current))
+               {
+                    errorCount++;
+                    yyerror("Variable is not defined");
+               }
+               current = new SymTable("block", current); 
+          } 
+          '{' list '}' { current = current->prev; }
+          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ID ASSIGN e ')' { current = new SymTable("block", current); current->addVar($3, $4, 1); } '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ';' bool_e ';' ID ASSIGN e ')' 
+          {
+               if(!VerifId($6, "var", current))
+               {
+                    errorCount++;
+                    yyerror("Variable is not defined");
+               } 
+               current = new SymTable("block", current); 
+          } 
+          '{' list '}' { current = current->prev; }
+          | CTRL1 '(' ID ASSIGN e ';' bool_e ';' ')' 
+          { 
+               if(!VerifId($3, "var", current))
+               {
+                    errorCount++;
+                    yyerror("Variable is not defined");
+               } 
+               current = new SymTable("block", current); 
+          } 
+          '{' list '}' { current = current->prev; }
+          | CTRL1 '(' TYPE ID ASSIGN e ';' bool_e ';' ')' { current = new SymTable("block", current); current->addVar($3, $4, 1); } '{' list '}' { current = current->prev; }
           | CTRL1 '(' ';' bool_e ';'')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
           ;
 
-array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}' { current->addVar($1, $2, stoi($4), current->name); } 
-      | TYPE ID '['']' ASSIGN { current->addVar($1, $2, 0, current->name); } '{' nr_list '}' { current->ids[nume].size = current->ids[nume].int_val.size(); }
-      | TYPE ID '[' NR ']' { current->addVar($1, $2, stoi($4), current->name); }
-      | TYPE '*' ID { current->addVar($1, $3, 0, current->name); }
+array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}' { current->addVar($1, $2, stoi($4)); } 
+      | TYPE ID '['']' ASSIGN { current->addVar($1, $2, 0); } '{' nr_list '}' { current->ids[nume].size = current->ids[nume].int_val.size(); }
+      | TYPE ID '[' NR ']' { current->addVar($1, $2, stoi($4)); }
+      | TYPE '*' ID { current->addVar($1, $3, 0); }
       ;
 
 nr_list : nr_list ',' NR

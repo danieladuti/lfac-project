@@ -48,17 +48,19 @@ class SymTable {
     SymTable(string name); //pentru global scope
     SymTable(string name, SymTable* prev); //restul
     //bool existsId(string s);
-    void addVar(string type, string name, int size, string domain_name);
-    void addFuncNoClass(string type, string name, string domain_name);
-    void addFunc(string type, string name, string class_name, string domain_name);
+    void addVar(string type, string name, int size);
+    void addFuncNoClass(string type, string name);
+    void addFunc(string type, string name, string class_name);
     void addClass(string name);
     void printVars();
     void printVarstoFile();
+    bool existsId(string name, string idType);
     ~SymTable();
 };
 
 extern vector<SymTable*> tabels;
 extern string nume;
 
+bool VerifId(string name, string idType, SymTable* current);
 
 
