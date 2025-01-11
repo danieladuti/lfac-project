@@ -40,6 +40,7 @@ void SymTable::addVar(string type, string name, int size)
         else if(type == "float")
             var.float_val.resize(size);
     }
+    else var.size = 0;
     ids[name] = var;
 }
 
@@ -111,6 +112,35 @@ bool SymTable::existsId(string name, string idType)
     return false;
 }
 
+string SymTable::getType(string name, string idType)
+{
+    map<string, IdInfo>::iterator it;
+    string tip;
+    for(it = ids.begin(); it != ids.end(); ++it)
+        if(it->first == name && it->second.idType == idType)
+            tip = it->second.type;
+    return tip;
+}
+
+Value Value::Adunare(Value A, Value B, string type)
+{
+    Value C;
+    if(type == "int")
+        C.int_value = A.int_value + B.int_value;
+    else if(type == "float")
+        C.float_value = A.float_value + B.float_value;
+    else if(type == "string" || type == "char")
+        C.string_value = "Eroare! Adunare intre string-uri!";
+    else C.string_value = "Eroare! Adunare intre bool";
+    return C;
+}
+
+Value ASTNode::EvalTree()
+{
+    if(root == "+")
+        return value.Adunare(stanga->EvalTree(), dreapta->EvalTree(), type);
+}
+
 bool VerifId(string name, string idType, SymTable* current)
 {
     SymTable* copy_current = current; 
@@ -121,6 +151,14 @@ bool VerifId(string name, string idType, SymTable* current)
         copy_current = copy_current->prev;
     } 
     return true;
+}
+
+string GetType(string name, string idType, SymTable* current)
+{
+    SymTable* copy_current = current;
+    while(!copy_current->existsId(name, idType)) 
+        copy_current = copy_current->prev;
+    return copy_current->getType(name, idType);
 }
 
 SymTable::~SymTable() 

@@ -13,9 +13,11 @@ int errorCount = 0;
 %}
 %union {
      char* string;
+     ASTNode* ptrASTNode;
 }
 %token BGIN ASSIGN COMPARE SI SAU CARACTER
 %token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS NR NR_FLOAT TEXT 
+%type<ptrASTNode> e
 %start progr
 
 %left SAU
@@ -99,10 +101,42 @@ statement: func_call
                               yyerror("Variable is not defined");
                          }
                        }
-         | TYPE ID ASSIGN e { current->addVar($1, $2, 1); }
-         | TYPE ID ASSIGN bool_e { current->addVar($1, $2, 1); }
-         | TYPE ID ASSIGN TEXT { current->addVar($1, $2, 1); }
-         | TYPE ID ASSIGN CARACTER { current->addVar($1, $2, 1); }
+         | TYPE ID ASSIGN e { 
+                              if(!current->existsId($2, "var")) 
+                                   current->addVar($1, $2, 1); 
+                              else 
+                              {
+                                   errorCount++;
+                                   yyerror("Variable already defined");
+                              }     
+                            }
+         | TYPE ID ASSIGN bool_e { 
+                                   if(!current->existsId($2, "var")) 
+                                        current->addVar($1, $2, 1); 
+                                   else 
+                                   {
+                                        errorCount++;
+                                        yyerror("Variable already defined");
+                                   }  
+                                 }
+         | TYPE ID ASSIGN TEXT { 
+                                   if(!current->existsId($2, "var")) 
+                                        current->addVar($1, $2, 1); 
+                                   else 
+                                   {
+                                        errorCount++;
+                                        yyerror("Variable already defined");
+                                   } 
+                               }
+         | TYPE ID ASSIGN CARACTER { 
+                                        if(!current->existsId($2, "var")) 
+                                             current->addVar($1, $2, 1); 
+                                        else 
+                                        {
+                                             errorCount++;
+                                             yyerror("Variable already defined");
+                                        } 
+                                   }
          | ID '[' NR ']' ASSIGN e { 
                                    if(!VerifId($1, "var", current))
                                    {
@@ -147,13 +181,45 @@ statement: func_call
                               }
          | return_net
          | array
-         | TYPE ID { current->addVar($1, $2, 1); }
-         | ID ID { current->addVar($1, $2, 1); }
+         | TYPE ID { 
+                    if(!current->existsId($2, "var")) 
+                        current->addVar($1, $2, 1); 
+                    else 
+                    {
+                         errorCount++;
+                         yyerror("Variable already defined");
+                    }  
+                   }
+         | ID ID { 
+                    if(!current->existsId($2, "var")) 
+                         current->addVar($1, $2, 1); 
+                    else 
+                    {
+                         errorCount++;
+                         yyerror("Variable already defined");
+                    }  
+                 }
          | ID'.'ID ASSIGN e { 
-                              if(!VerifId($3, "var", current))
+                              if(!VerifId($1, "var", current))
                               {
                                    errorCount++;
                                    yyerror("Variable is not defined");
+                              }
+                              else
+                              {
+                                   string clasa_origine = GetType($1, "var", current);
+                                   SymTable* copy_current = current;
+                                   for(auto x : tabels)
+                                        if(x->name == clasa_origine)
+                                        {
+                                             copy_current = x;
+                                             break;
+                                        }
+                                   if(!copy_current->existsId($3, "var"))
+                                   {
+                                        errorCount++;
+                                        yyerror("Variable is not defined");
+                                   }
                               }
                             }
          ;
@@ -174,8 +240,31 @@ func_call : ID '(' call_list ')' {
                                         errorCount++;
                                         yyerror("Function is not defined");
                                    }
+                                   //else nume = $1;
                                  }
-          | ID'.'func_call
+          | ID'.'ID '(' call_list ')' {
+                              if(!VerifId($1, "var", current))
+                              {
+                                   errorCount++;
+                                   yyerror("Variable is not defined");
+                              }
+                              else
+                              {
+                                   string clasa_origine = GetType($1, "var", current);
+                                   SymTable* copy_current = current;
+                                   for(auto x : tabels)
+                                        if(x->name == clasa_origine)
+                                        {
+                                             copy_current = x;
+                                             break;
+                                        }
+                                   if(!copy_current->existsId($3, "func"))
+                                   {
+                                        errorCount++;
+                                        yyerror("Function is not defined");
+                                   }
+                              }
+                         }
           ;
 
 control_s : CTRL '(' bool_e ')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
@@ -214,13 +303,52 @@ control_s : CTRL '(' bool_e ')' { current = new SymTable("block", current); } '{
           | CTRL1 '(' ';' bool_e ';'')' { current = new SymTable("block", current); } '{' list '}' { current = current->prev; }
           ;
 
-array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}' { current->addVar($1, $2, stoi($4)); } 
-      | TYPE ID '['']' ASSIGN { current->addVar($1, $2, 0); } '{' nr_list '}' { current->ids[nume].size = current->ids[nume].int_val.size(); }
-      | TYPE ID '[' NR ']' { current->addVar($1, $2, stoi($4)); }
-      | TYPE '*' ID { current->addVar($1, $3, 0); }
+array : TYPE ID '[' NR ']' ASSIGN '{' nr_list '}' 
+          {
+               if(!current->existsId($2, "var")) 
+                    current->addVar($1, $2, stoi($4));
+               else 
+               {
+                    errorCount++;
+                    yyerror("Variable already defined");
+               }  
+          } 
+      | TYPE ID '['']' ASSIGN '{' nr_list '}' 
+      { 
+          if(!current->existsId($2, "var")) 
+          {
+               current->addVar($1, $2, 0);
+               current->ids[nume].size = current->ids[nume].int_val.size();
+          } 
+          else 
+          {
+               errorCount++;
+               yyerror("Variable already defined");
+          }  
+      }
+      | TYPE ID '[' NR ']' 
+      { 
+          if(!current->existsId($2, "var")) 
+               current->addVar($1, $2, stoi($4));
+          else 
+          {
+               errorCount++;
+               yyerror("Variable already defined");
+          }  
+      }
+      | TYPE '*' ID 
+      { 
+          if(!current->existsId($3, "var")) 
+               current->addVar($1, $3, 0); 
+          else 
+          {
+               errorCount++;
+               yyerror("Variable already defined");
+          } 
+      }
       ;
 
-nr_list : nr_list ',' NR
+nr_list : nr_list ',' NR { current->ids[nume].int_val.push_back(stoi($3)); }
         | NR { current->ids[nume].int_val.push_back(stoi($1)); }
         ;
 
@@ -267,7 +395,7 @@ bool_e : e COMPARE e
        ;
            
 call_list : call_list ',' e
-           | e
+           | e 
            | func_call
            | call_list ',' func_call
            | /*epsilon*/

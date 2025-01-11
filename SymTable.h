@@ -38,7 +38,28 @@ class IdInfo {
     IdInfo(string name, string idType) : name(name), idType(idType) {}
 };
 
+class Value
+{
+    string string_value;
+    int int_value;
+    float float_value;
+    bool bool_value;
+    public:
+    Value Adunare(Value A, Value B, string type);
+};
 
+class ASTNode
+{
+    string root; //nume variabila/functie
+    Value value;
+    string type;
+    ASTNode* stanga, *dreapta;
+
+    ASTNode(string op, ASTNode* st, ASTNode* dr) : root(op), stanga(st), dreapta(dr) {}
+    ASTNode(string op, ASTNode* st) : root(op), stanga(st) {}
+
+    Value EvalTree();
+};
 
 class SymTable {
     public:
@@ -55,6 +76,7 @@ class SymTable {
     void printVars();
     void printVarstoFile();
     bool existsId(string name, string idType);
+    string getType(string name, string idType);
     ~SymTable();
 };
 
@@ -62,5 +84,5 @@ extern vector<SymTable*> tabels;
 extern string nume;
 
 bool VerifId(string name, string idType, SymTable* current);
-
+string GetType(string name, string idType, SymTable* current);
 

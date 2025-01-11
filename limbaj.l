@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include "SymTable.h"
 #include "limbaj.tab.h"
 %}
 %option noyywrap
