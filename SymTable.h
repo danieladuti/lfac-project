@@ -40,25 +40,30 @@ class IdInfo {
 
 class Value
 {
+    public:
     string string_value;
     int int_value;
     float float_value;
     bool bool_value;
     public:
-    Value Adunare(Value A, Value B, string type);
+    Value CalcResult(Value A, Value B, string st_type, string root);
+    Value Negate(Value A);
 };
 
 class ASTNode
 {
+    public:
     string root; //nume variabila/functie
     Value value;
     string type;
     ASTNode* stanga, *dreapta;
 
     ASTNode(string op, ASTNode* st, ASTNode* dr) : root(op), stanga(st), dreapta(dr) {}
-    ASTNode(string op, ASTNode* st) : root(op), stanga(st) {}
+    ASTNode(string op, ASTNode* st);
+    ASTNode(string root, Value value, string type);
 
     Value EvalTree();
+    string VerifType();
 };
 
 class SymTable {
@@ -77,6 +82,8 @@ class SymTable {
     void printVarstoFile();
     bool existsId(string name, string idType);
     string getType(string name, string idType);
+    Value getValue(string name, string idType);
+    void assignValue(string name, Value v);
     ~SymTable();
 };
 
@@ -85,4 +92,8 @@ extern string nume;
 
 bool VerifId(string name, string idType, SymTable* current);
 string GetType(string name, string idType, SymTable* current);
+Value GetValue(string name, string idType, SymTable* current);
+void AssignValue(string name, Value v, SymTable* current);
+string GetASTType(ASTNode* arbore);
+Value GetASTValue(ASTNode* arbore);
 

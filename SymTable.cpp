@@ -6,6 +6,160 @@ ofstream fout("SymTables.txt");
 vector<SymTable*> tabels;
 string nume;
 
+ASTNode::ASTNode(string root, Value value, string type)
+{
+    stanga = NULL;
+    dreapta = NULL;
+    this->root = root;
+    this->value = value;
+    this->type = type;
+}
+
+ASTNode::ASTNode(string op, ASTNode* st)
+{
+    this->root = op;
+    stanga = st;
+    dreapta = NULL;
+}
+
+Value Value::CalcResult(Value A, Value B, string st_type, string root)
+{
+    Value C;
+    if((root == "+" || root == "-" || root == "*" || root == "/" || root == ">=" || root == "<=" || root == ">" || root == "<" ||
+        root == "&&" || root == "||") && (st_type == "string" || st_type == "char"))
+        C.string_value = "Eroare";
+    if((root == "+" || root == "-" || root == "*" || root == "/" || root == ">=" || root == "<=" || root == ">" || root == "<") && (st_type == "bool"))
+        C.string_value = "Eroare";
+    if((root == "&&" || root == "||") && (st_type == "int" || st_type == "float"))
+        C.string_value = "Eroare";
+    if(root == "+")
+    {
+        if(st_type == "int")
+            C.int_value = A.int_value + B.int_value;
+        else if(st_type == "float")
+            C.float_value = A.float_value + B.float_value;
+    }
+    else if(root == "-")
+    {
+        if(st_type == "int")
+            C.int_value = A.int_value - B.int_value;
+        else if(st_type == "float")
+            C.float_value = A.float_value - B.float_value;
+    }
+    else if(root == "*")
+    {
+        if(st_type == "int")
+            C.int_value = A.int_value * B.int_value;
+        else if(st_type == "float")
+            C.float_value = A.float_value * B.float_value;
+    }
+    else if(root == "/")
+    {
+        if(st_type == "int")
+            C.int_value = A.int_value / B.int_value;
+        else if(st_type == "float")
+            C.float_value = A.float_value / B.float_value;
+    }
+    else if(root == ">=")
+    {
+        if(st_type == "int")
+            C.bool_value = (A.int_value >= B.int_value);
+        else if(st_type == "float")
+            C.bool_value = (A.float_value >= B.float_value);
+    }
+    else if(root == "<=")
+    {
+        if(st_type == "int")
+            C.bool_value = (A.int_value <= B.int_value);
+        else if(st_type == "float")
+            C.bool_value = (A.float_value <= B.float_value);
+    }
+    else if(root == ">")
+    {
+        if(st_type == "int")
+            C.bool_value = (A.int_value > B.int_value);
+        else if(st_type == "float")
+            C.bool_value = (A.float_value > B.float_value);
+    }
+    else if(root == "<")
+    {
+        if(st_type == "int")
+            C.bool_value = (A.int_value < B.int_value);
+        else if(st_type == "float")
+            C.bool_value = (A.float_value < B.float_value);
+    }
+    else if(root == "==")
+    {
+        if(st_type == "int")
+            C.bool_value = (A.int_value == B.int_value);
+        else if(st_type == "float")
+            C.bool_value = (A.float_value == B.float_value);
+        else if(st_type == "string" || st_type == "char")
+            C.bool_value = (A.string_value == B.string_value);
+        else if(st_type == "bool")
+            C.bool_value = (A.bool_value == B.bool_value);
+    }
+    else if(root == "!=")
+    {
+        if(st_type == "int")
+            C.bool_value = (A.int_value != B.int_value);
+        else if(st_type == "float")
+            C.bool_value = (A.float_value != B.float_value);
+        else if(st_type == "string" || st_type == "char")
+            C.bool_value = (A.string_value != B.string_value);
+        else if(st_type == "bool")
+            C.bool_value = (A.bool_value != B.bool_value);
+    }
+    else if(root == "&&")
+        if(st_type == "bool")
+            C.bool_value = (A.bool_value && B.bool_value);
+    else if(root == "||")
+        if(st_type == "bool")
+            C.bool_value = (A.bool_value || B.bool_value);
+    return C;  
+}
+
+Value Value::Negate(Value A)
+{
+    Value C;
+    C.bool_value = (!A.bool_value);
+    return C;
+}
+
+string ASTNode::VerifType()
+{
+    if(root == "+" || root == "-" || root == "*" || root == "/" || root == ">=" || root == "<=" || root == "==" || root == ">" 
+        || root == "<" || root == "!=" || root == "==" || root == "&&" || root == "||")
+    {
+        if(stanga->VerifType() == dreapta->VerifType())
+        {
+            type = stanga->type;
+            return stanga->type;
+        }
+        return "Erorr: Types do not coincide in tree";
+    }
+    else if(root == "!")
+    {
+        if(stanga->VerifType() == "bool")
+        {
+            type = stanga->type;
+            return stanga->type;
+        }
+        return "Error: Types do not coincide";
+    }
+    return type;
+}
+
+Value ASTNode::EvalTree()
+{
+    if(root == "+" || root == "-" || root == "*" || root == "/" || root == ">=" || root == "<=" || root == "==" || root == ">" 
+        || root == "<" || root == "!=" || root == "&&" || root == "||")
+        return value.CalcResult(stanga->EvalTree(), dreapta->EvalTree(), stanga->type, root);
+    else if(root == "!")
+        return value.Negate(stanga->EvalTree());
+    return value;
+}
+
 SymTable::SymTable(string name)
 {
     this->name = name;
@@ -64,11 +218,6 @@ void SymTable::addClass(string name)
     ids[name] = clasa;
 }
 
-
-/*bool SymTable::existsId(string var) {
-    return ids.find(var)!= ids.end();  
-}*/
-
 void SymTable::printVars() 
 {
     for (pair<string, IdInfo> v : ids) {
@@ -118,27 +267,50 @@ string SymTable::getType(string name, string idType)
     string tip;
     for(it = ids.begin(); it != ids.end(); ++it)
         if(it->first == name && it->second.idType == idType)
+        {
             tip = it->second.type;
+            break;
+        }
     return tip;
 }
 
-Value Value::Adunare(Value A, Value B, string type)
+Value SymTable::getValue(string name, string idType)
 {
-    Value C;
-    if(type == "int")
-        C.int_value = A.int_value + B.int_value;
-    else if(type == "float")
-        C.float_value = A.float_value + B.float_value;
-    else if(type == "string" || type == "char")
-        C.string_value = "Eroare! Adunare intre string-uri!";
-    else C.string_value = "Eroare! Adunare intre bool";
-    return C;
+    map<string, IdInfo>::iterator it;
+    Value valoare;
+    for(it = ids.begin(); it != ids.end(); ++it)
+        if(it->first == name && it->second.idType == idType)
+        {
+            if(it->second.type == "int")
+                valoare.int_value = it->second.int_val[0];
+            else if(it->second.type == "float")
+                valoare.float_value = it->second.float_val[0];
+            else if(it->second.type == "string" || it->second.type == "char")
+                valoare.string_value = it->second.text[0];
+            else if(it->second.type == "bool")
+                valoare.bool_value = it->second.bool_val[0];
+            break;
+        }
+    return valoare;
 }
 
-Value ASTNode::EvalTree()
+void SymTable::assignValue(string name, Value v)
 {
-    if(root == "+")
-        return value.Adunare(stanga->EvalTree(), dreapta->EvalTree(), type);
+    map<string, IdInfo>::iterator it;
+    string tip;
+    for(it = ids.begin(); it != ids.end(); ++it)
+        if(it->first == name && it->second.idType == "var")
+        {
+            if(it->second.type == "int")
+                it->second.int_val[0] = v.int_value;
+            else if(it->second.type == "float")
+                it->second.float_val[0] = v.float_value;
+            else if(it->second.type == "string" || it->second.type == "char")
+                it->second.text[0] = v.string_value;
+            else if(it->second.type == "bool")
+                it->second.bool_val[0] = v.bool_value;
+            break;
+        }
 }
 
 bool VerifId(string name, string idType, SymTable* current)
@@ -159,6 +331,32 @@ string GetType(string name, string idType, SymTable* current)
     while(!copy_current->existsId(name, idType)) 
         copy_current = copy_current->prev;
     return copy_current->getType(name, idType);
+}
+
+Value GetValue(string name, string idType, SymTable* current)
+{
+    SymTable* copy_current = current;
+    while(!copy_current->existsId(name, idType)) 
+        copy_current = copy_current->prev;
+    return copy_current->getValue(name, idType);
+}
+
+void AssignValue(string name, Value v, SymTable* current)
+{
+    SymTable* copy_current = current;
+    while(!copy_current->existsId(name, "var")) 
+        copy_current = copy_current->prev;
+    copy_current->assignValue(name, v);
+}
+
+string GetASTType(ASTNode* arbore)
+{
+    return arbore->VerifType();
+}
+
+Value GetASTValue(ASTNode* arbore)
+{
+    return arbore->EvalTree();
 }
 
 SymTable::~SymTable() 

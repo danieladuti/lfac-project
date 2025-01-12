@@ -17,7 +17,7 @@ int errorCount = 0;
 }
 %token BGIN ASSIGN COMPARE SI SAU CARACTER
 %token<string> ID TYPE RET CTRL CTRL1 ADEVARAT FALS CLASS TYPE_CLASS NR NR_FLOAT TEXT 
-%type<ptrASTNode> e
+%type<ptrASTNode> e func_call
 %start progr
 
 %left SAU
@@ -99,6 +99,43 @@ statement: func_call
                          {
                               errorCount++;
                               yyerror("Variable is not defined");
+                         }
+                         else
+                         {
+                              string tip = GetASTType($3);
+                              if(tip == "Error: Types do not coincide in tree")
+                              {
+                                   errorCount++;
+                                   yyerror("Error: Types do not coincide in tree");
+                              }
+                              else
+                              {
+                                   Value v = GetASTValue($3);
+                                   if(v.string_value == "Eroare")
+                                   {
+                                        errorCount++;
+                                        if(tip == "int")
+                                             yyerror("Error: Operation not supported by type int");
+                                        else if(tip == "float")
+                                             yyerror("Error: Operation not supported by type float");
+                                        else if(tip == "string")
+                                             yyerror("Error: Operation not supported by type string");
+                                        else if(tip == "char")
+                                             yyerror("Error: Operation not supported by type char");
+                                        else if(tip == "bool")
+                                             yyerror("Error: Operation not supported by type bool");
+                                   }
+                                   else
+                                   {
+                                        string tip_variabila = GetType($1, "var", current);
+                                        if(tip_variabila != tip)
+                                        {
+                                             errorCount++;
+                                             yyerror("Error: Left and right operand types do not match");
+                                        }
+                                        else AssignValue($1, v, current);
+                                   }
+                              }
                          }
                        }
          | TYPE ID ASSIGN e { 
@@ -352,40 +389,104 @@ nr_list : nr_list ',' NR { current->ids[nume].int_val.push_back(stoi($3)); }
         | NR { current->ids[nume].int_val.push_back(stoi($1)); }
         ;
 
-e : e '+' e 
-  | e '-' e 
-  | e '*' e   
-  | e '/' e
-  | e '+' func_call
-  | func_call '+' e
-  | e '-' func_call
-  | func_call '-' e 
-  | e '*' func_call 
-  | func_call '*' e  
-  | e '/' func_call    
-  | func_call '/' e
+e : e '+' e { $$ = new ASTNode("+", $1, $3); }
+  | e '-' e { $$ = new ASTNode("-", $1, $3); }
+  | e '*' e { $$ = new ASTNode("*", $1, $3); } 
+  | e '/' e { $$ = new ASTNode("/", $1, $3); }
+  | e '+' func_call { $$ = new ASTNode("+", $1, $3); }
+  | func_call '+' e { $$ = new ASTNode("+", $1, $3); }
+  | e '-' func_call { $$ = new ASTNode("-", $1, $3); }
+  | func_call '-' e { $$ = new ASTNode("-", $1, $3); }
+  | e '*' func_call { $$ = new ASTNode("*", $1, $3); }
+  | func_call '*' e { $$ = new ASTNode("*", $1, $3); }
+  | e '/' func_call { $$ = new ASTNode("/", $1, $3); }   
+  | func_call '/' e { $$ = new ASTNode("/", $1, $3); }
   | '(' e ')'
-  | ID '[' NR ']'
-  | NR { /*current->ids[nume].int_val[0] = stoi($1);*/ }
-  | NR_FLOAT { /*current->ids[nume].float_val[0] = stof($1);*/ }
-  | ID    { 
-               /*SymTable* search = current;
-               while(search->ids[$1].idType == "" || search->name == "global")
-                    search = search->prev;
-               //daca nu e nici in global de adaugat eroare sintactica
-               if(current->ids[nume].idType == "int")
-                    current->ids[nume].int_val = search->ids[$1].int_val;
-               else if(current->ids[nume].idType == "string" || current->ids[nume].idType == "char")
-                    current->ids[nume].text = search->ids[$1].text;
-               else if(current->ids[nume].idType == "bool")
-                    current->ids[nume].bool_val = search->ids[$1].bool_val;
-               else if(current->ids[nume].idType == "float")
-                    current->ids[nume].float_val = search->ids[$1].float_val;
-               //else current->ids[nume].params.parametri = search->ids[$1].params.parametri;*/
+  | ID '[' NR ']' 
+          {  
+               if(VerifId($1, "var", current))
+               {
+                    string type = GetType($1, "var", current);
+                    Value v;
+                    if(type == "int")
+                         v.int_value = 2;
+                    else if(type == "float")
+                         v.float_value = 2.0;
+                    else if(type == "string" || type == "char")
+                         v.string_value = "2";
+                    else if(type == "bool")
+                         v.bool_value = true;
+                    $$ = new ASTNode($1, v, type);
+               }
+               else
+               {
+                    errorCount++;
+                    yyerror("Variable is not defined");
+               }
           }
-  | ADEVARAT
-  | FALS
-  | ID'.'ID
+  | NR {
+          Value v;
+          v.int_value = stoi($1); 
+          $$ = new ASTNode($1, v, "int"); 
+       }
+  | NR_FLOAT { 
+               Value v;
+               v.float_value = stof($1); 
+               $$ = new ASTNode($1, v, "float"); 
+             }
+  | ID    { 
+              if(VerifId($1, "var", current))
+               {
+                    string type = GetType($1, "var", current);
+                    Value v = GetValue($1, "var", current);
+                    $$ = new ASTNode($1, v, type);
+               }
+               else
+               {
+                    errorCount++;
+                    yyerror("Variable is not defined");
+               }
+          }
+  | ADEVARAT {
+                    Value v;
+                    v.bool_value = true;
+                    $$ = new ASTNode($1, v, "bool");
+             }
+  | FALS {
+              Value v;
+              v.bool_value = false;
+              $$ = new ASTNode($1, v, "bool"); 
+         }
+  | ID'.'ID {
+               if(!VerifId($1, "var", current))
+               {
+                    errorCount++;
+                    yyerror("Variable is not defined");
+               }
+               else
+               {
+                    string clasa_origine = GetType($1, "var", current);
+                    SymTable* copy_current = current;
+                    for(auto x : tabels)
+                         if(x->name == clasa_origine)
+                         {
+                              copy_current = x;
+                              break;
+                         }
+                    if(!copy_current->existsId($3, "var"))
+                    {
+                         errorCount++;
+                         yyerror("Variable is not defined");
+                    }
+
+                    Value v = copy_current->getValue($3, "var");
+                    string tip = copy_current->getType($3, "var");
+                    string nume_var = $1;
+                    nume_var += ".";
+                    nume_var += $3;
+                    $$ = new ASTNode(nume_var, v, tip);
+               }
+            }
   ;
 
 bool_e : e COMPARE e
