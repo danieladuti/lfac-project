@@ -9,35 +9,6 @@ using namespace std;
 
 extern ofstream fout;
 
-class ParamList {
-    public:
-    //          type   name
-    vector<pair<string,string>> parametri;
-    ParamList() {}
-    void addParam(string type, string name);
-};
-
-class IdInfo {
-    public:
-    string idType; //variabila/functie/clasa
-    string type;
-    string name;
-    vector<bool> bool_val; //pentru variabile bool
-    vector<int> int_val; //pentru variabile int
-    vector<string> text; //pentru stringuri
-    vector<float> float_val; //pentru float
-    int size; //pentru vectori
-    string class_name; //pentru functii
-    ParamList params; //pentru functii si clase
-    IdInfo() {}
-    //constructor variabile si functii fara clasa in care apartin
-    IdInfo(string type, string name, string idType) : type(type),name(name), idType(idType) {}
-    //constructor functii
-    IdInfo(string type, string name, string idType, string class_name) : type(type),name(name),idType(idType),class_name(class_name) {}
-    //constructor clase
-    IdInfo(string name, string idType) : name(name), idType(idType) {}
-};
-
 class Value
 {
     public:
@@ -66,6 +37,39 @@ class ASTNode
     string VerifType();
 };
 
+class ParamList {
+    public:
+    //          type   name
+    vector<pair<string,string>> parametri;
+    ASTNode* expr;
+    ParamList() {}
+    ParamList(string type, string name);
+    ParamList(ParamList* p, string type, string name);
+    ParamList(string type, string name, ASTNode* e);
+    void addParam(string type, string name);
+};
+
+class IdInfo {
+    public:
+    string idType; //variabila/functie/clasa
+    string type;
+    string name;
+    vector<bool> bool_val; //pentru variabile bool
+    vector<int> int_val; //pentru variabile int
+    vector<string> text; //pentru stringuri
+    vector<float> float_val; //pentru float
+    int size; //pentru vectori
+    string class_name; //pentru functii
+    ParamList params; //pentru functii si clase
+    IdInfo() {}
+    //constructor variabile si functii fara clasa in care apartin
+    IdInfo(string type, string name, string idType) : type(type),name(name), idType(idType) {}
+    //constructor functii
+    IdInfo(string type, string name, string idType, string class_name) : type(type),name(name),idType(idType),class_name(class_name) {}
+    //constructor clase
+    IdInfo(string name, string idType) : name(name), idType(idType) {}
+};
+
 class SymTable {
     public:
     map<string, IdInfo> ids; //salvam informatii despre simboluri
@@ -84,6 +88,8 @@ class SymTable {
     string getType(string name, string idType);
     Value getValue(string name, string idType);
     void assignValue(string name, Value v);
+    ParamList* getParams(string name);
+    int getSize(string name);
     ~SymTable();
 };
 
@@ -96,4 +102,6 @@ Value GetValue(string name, string idType, SymTable* current);
 void AssignValue(string name, Value v, SymTable* current);
 string GetASTType(ASTNode* arbore);
 Value GetASTValue(ASTNode* arbore);
+ParamList* GetParams(string name, SymTable* current);
+int GetSize(string name, SymTable* current);
 

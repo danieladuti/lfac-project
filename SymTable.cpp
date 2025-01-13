@@ -173,6 +173,23 @@ SymTable::SymTable(string name, SymTable* prev)
     this->prev = prev;
 }
 
+ParamList::ParamList(string type, string name)
+{
+    this->addParam(type, name);
+}
+
+ParamList::ParamList(string type, string name, ASTNode* e)
+{
+    this->addParam(type, name);
+    expr = e;
+}
+
+ParamList::ParamList(ParamList* p, string type, string name)
+{
+    this->parametri = p->parametri;
+    this->addParam(type, name);
+}
+
 void ParamList::addParam(string type, string name)
 {
     parametri.push_back({type, name});
@@ -221,9 +238,19 @@ void SymTable::addClass(string name)
 void SymTable::printVars() 
 {
     for (pair<string, IdInfo> v : ids) {
-        cout << v.second.idType << " name: " << v.first << " type:" << v.second.type;
+        cout << v.second.idType << " name: " << v.first << " type:" << v.second.type << " valoare:";
         if(v.second.idType != "func" && v.second.idType != "clasa")
-            cout << " " << v.second.size; 
+        {
+            if(v.second.type == "int")
+                cout << v.second.int_val[0];
+            else if(v.second.type == "float")
+                cout << v.second.float_val[0];
+            else if(v.second.type == "string" || v.second.type == "char")
+                cout << v.second.text[0];
+            else if(v.second.type == "bool")
+                cout << v.second.bool_val[0];
+            cout << " " << v.second.size;
+        } 
         cout << "\n";
         if(v.second.idType == "func")
         {
@@ -238,9 +265,19 @@ void SymTable::printVars()
 void SymTable::printVarstoFile()
 {
     for (pair<string, IdInfo> v : ids) {
-        fout << v.second.idType << " name: " << v.first << " type:" << v.second.type;
+        fout << v.second.idType << " name: " << v.first << " type:" << v.second.type << " valoare:";
         if(v.second.idType != "func" && v.second.idType != "clasa")
+        {
+            if(v.second.type == "int")
+                fout << v.second.int_val[0];
+            else if(v.second.type == "float")
+                fout << v.second.float_val[0];
+            else if(v.second.type == "string" || v.second.type == "char")
+                fout << v.second.text[0];
+            else if(v.second.type == "bool")
+                fout << v.second.bool_val[0];
             fout << " " << v.second.size; 
+        }
         fout << "\n";
         if(v.second.idType == "func")
         {
@@ -313,6 +350,32 @@ void SymTable::assignValue(string name, Value v)
         }
 }
 
+ParamList* SymTable::getParams(string name)
+{
+    map<string, IdInfo>::iterator it;
+    ParamList *p = new ParamList();
+    for(it = ids.begin(); it != ids.end(); ++it)
+        if(it->first == name && it->second.idType == "func")
+        {
+            p->parametri = it->second.params.parametri;
+            break;
+        }
+    return p;
+}
+
+int SymTable::getSize(string name)
+{
+    map<string, IdInfo>::iterator it;
+    int var_size = 0;
+    for(it = ids.begin(); it != ids.end(); ++it)
+        if(it->first == name && it->second.idType == "var")
+        {
+            var_size = it->second.size;
+            break;
+        }
+    return var_size;
+}
+
 bool VerifId(string name, string idType, SymTable* current)
 {
     SymTable* copy_current = current; 
@@ -347,6 +410,22 @@ void AssignValue(string name, Value v, SymTable* current)
     while(!copy_current->existsId(name, "var")) 
         copy_current = copy_current->prev;
     copy_current->assignValue(name, v);
+}
+
+ParamList* GetParams(string name, SymTable* current)
+{
+    SymTable* copy_current = current;
+    while(!copy_current->existsId(name, "func")) 
+        copy_current = copy_current->prev;
+    return copy_current->getParams(name);
+}
+
+int GetSize(string name, SymTable* current)
+{
+    SymTable* copy_current = current;
+    while(!copy_current->existsId(name, "var")) 
+        copy_current = copy_current->prev;
+    return copy_current->getSize(name);
 }
 
 string GetASTType(ASTNode* arbore)

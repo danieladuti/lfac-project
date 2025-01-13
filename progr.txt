@@ -99,8 +99,8 @@ bool varx = v < y || x == 2;
 x = "gigel23985hkjdshgs';hlj.[er.4[563242]]";
 chx = '2';
 Print(x+2);
-TypeOf(var);
+TypeOf(varx);
 float flx = 22.45;
-x = (2 + 2) + 5;
+x = ((2 + 2) + 5) * 4;
 x = ((2 + f(4)) * (f(4) + x) - (f(x, 57) + cl.h(43, x) + (33 / k.g * g(23, x, m)) / d(64)));
 }
