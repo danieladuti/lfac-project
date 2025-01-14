@@ -1,0 +1,68 @@
+class Myclass
+{
+    int y;
+    int z;
+    private:
+    int f(int g,float j)
+    {
+        g=2;
+        j = 2.0;
+    }
+    public:
+    string g;
+    Myclass()
+    {
+        y=2;
+    }
+    ~Myclass()
+    {
+        return 0;
+    }
+}
+
+int x;
+int y;
+
+int f(int a, int b)
+{
+    int z = 2;
+    a = z + 2;
+    return z;
+}
+
+int g()
+{
+    x = 6;
+    string s = "jdkshsdkf";
+}
+
+int main()
+{
+    x = 5;
+    string h = "gigel";
+    y = 7;
+    x = (y + 2) + (10 / 2);
+    x = f(x, y) + 2;
+    if(x < 5)
+    {
+        y = 2 + 2;
+    }
+    while(x >= 7)
+    {
+        int v;
+        v = 74;
+        v = v - x;
+    }
+    int A[25];
+    x = x + A[25];
+    float *h1;
+    float fl;
+    h1 = 2.0 + 7.0;
+    Print(x + y);
+    TypeOf(x + y);
+    Myclass obj;
+    obj.x = 9;
+    obj.f(x,4);
+    x = variabila;
+    x = ((2 + f(4)) * (f(4) + x) - (f(x, 57) + cl.h(43, x) + (33 / k.g * g(23, x, m)) / d(64)));
+}

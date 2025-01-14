@@ -42,8 +42,138 @@ declarations : decl
 	      ;
 
 decl       :  TYPE ID ';' { 
-                              current->addVar($1, $2, 1);
+                              if(!current->existsId($2, "var")) 
+                              current->addVar($1, $2, 1); 
+                              else 
+                              {
+                                   errorCount++;
+                                   yyerror("Variable already defined");
+                              }  
                           }
+           | ID ID ';' { 
+                    if(!current->existsId($2, "var")) 
+                         current->addVar($1, $2, 1); 
+                    else 
+                    {
+                         errorCount++;
+                         yyerror("Variable already defined");
+                    }  
+                 }
+           | TYPE ID ASSIGN e ';' { 
+                              if(!current->existsId($2, "var")) 
+                              {
+                                   current->addVar($1, $2, 1);
+                                   string tip = GetASTType($4);
+                                   Value v = GetASTValue($4);
+                                   if(v.string_value == "Eroare")
+                                   {
+                                        errorCount++;
+                                        if(tip == "int")
+                                             yyerror("Error: Operation not supported by type int");
+                                        else if(tip == "float")
+                                             yyerror("Error: Operation not supported by type float");
+                                        else if(tip == "string")
+                                             yyerror("Error: Operation not supported by type string");
+                                        else if(tip == "char")
+                                             yyerror("Error: Operation not supported by type char");
+                                        else if(tip == "bool")
+                                             yyerror("Error: Operation not supported by type bool");
+                                   }
+                                   else
+                                   {
+                                        string tip_variabila = $1;
+                                        if(tip_variabila != tip)
+                                        {
+                                             errorCount++;
+                                             yyerror("Error: Left and right operand types do not match");
+                                        }
+                                        else AssignValue($2, v, current);
+                                   }
+                              } 
+                              else 
+                              {
+                                   errorCount++;
+                                   yyerror("Variable already defined");
+                              }     
+                            }
+         | TYPE ID ASSIGN bool_e ';' { 
+                                   if(!current->existsId($2, "var")) 
+                                   {
+                                        current->addVar($1, $2, 1);
+                                        string tip = GetASTType($4);
+                                        Value v = GetASTValue($4);
+                                        if(v.string_value == "Eroare")
+                                        {
+                                             errorCount++;
+                                             if(tip == "int")
+                                                  yyerror("Error: Operation not supported by type int");
+                                             else if(tip == "float")
+                                                  yyerror("Error: Operation not supported by type float");
+                                             else if(tip == "string")
+                                                  yyerror("Error: Operation not supported by type string");
+                                             else if(tip == "char")
+                                                  yyerror("Error: Operation not supported by type char");
+                                             else if(tip == "bool")
+                                                  yyerror("Error: Operation not supported by type bool");
+                                        }
+                                        else
+                                        {
+                                             string tip_variabila = $1;
+                                             if(tip_variabila != tip)
+                                             {
+                                                  errorCount++;
+                                                  yyerror("Error: Left and right operand types do not match");
+                                             }
+                                             else AssignValue($2, v, current);
+                                        }
+                                   } 
+                                   else 
+                                   {
+                                        errorCount++;
+                                        yyerror("Variable already defined");
+                                   }  
+                                 }
+         | TYPE ID ASSIGN TEXT ';' { 
+                                   if(!current->existsId($2, "var")) 
+                                   {
+                                        current->addVar($1, $2, 1);
+                                        Value v;
+                                        v.string_value = $4;
+                                        string tip_variabila = $1;
+                                        if(tip_variabila != "string")
+                                        {
+                                             errorCount++;
+                                             yyerror("Error: Left and right operand types do not match");
+                                        }
+                                        else AssignValue($2, v, current);
+                                   } 
+                                   else 
+                                   {
+                                        errorCount++;
+                                        yyerror("Variable already defined");
+                                   } 
+                               }
+         | TYPE ID ASSIGN CARACTER ';' { 
+                                        if(!current->existsId($2, "var")) 
+                                        {
+                                             current->addVar($1, $2, 1);
+                                             Value v;
+                                             v.string_value = $4;
+                                             string tip_variabila = $1;
+                                             if(tip_variabila != "char")
+                                             {
+                                                  errorCount++;
+                                                  yyerror("Error: Left and right operand types do not match");
+                                             }
+                                             else AssignValue($2, v, current);
+                                        } 
+                                        else 
+                                        {
+                                             errorCount++;
+                                             yyerror("Variable already defined");
+                                        } 
+                                   }
+          | array ';'
            ;
 
 decl_func : TYPE ID {
@@ -149,6 +279,50 @@ list :  statement ';'
      ;
 
 statement: func_call
+         | ID ASSIGN func_call { 
+                         if(!VerifId($1, "var", current))
+                         {
+                              errorCount++;
+                              yyerror("Variable is not defined");
+                         }
+                         else
+                         {
+                              string tip = GetASTType($3);
+                              if(tip == "Error: Types do not coincide in tree")
+                              {
+                                   errorCount++;
+                                   yyerror("Error: Types do not coincide in tree");
+                              }
+                              else
+                              {
+                                   Value v = GetASTValue($3);
+                                   if(v.string_value == "Eroare")
+                                   {
+                                        errorCount++;
+                                        if(tip == "int")
+                                             yyerror("Error: Operation not supported by type int");
+                                        else if(tip == "float")
+                                             yyerror("Error: Operation not supported by type float");
+                                        else if(tip == "string")
+                                             yyerror("Error: Operation not supported by type string");
+                                        else if(tip == "char")
+                                             yyerror("Error: Operation not supported by type char");
+                                        else if(tip == "bool")
+                                             yyerror("Error: Operation not supported by type bool");
+                                   }
+                                   else
+                                   {
+                                        string tip_variabila = GetType($1, "var", current);
+                                        if(tip_variabila != tip)
+                                        {
+                                             errorCount++;
+                                             yyerror("Error: Left and right operand types do not match");
+                                        }
+                                        else AssignValue($1, v, current);
+                                   }
+                              }
+                         }
+                       }
          | ID ASSIGN e { 
                          if(!VerifId($1, "var", current))
                          {
@@ -431,14 +605,7 @@ statement: func_call
                             }
          ;
 
-return_net: RET ID { 
-                     if(!VerifId($2, "var", current))
-                     {
-                          errorCount++;
-                          yyerror("Variable is not defined");
-                     }
-                   }
-          | RET NR
+return_net: RET e
           ;
 
 func_call : ID '(' call_list ')' { 
@@ -1041,6 +1208,8 @@ e : e '+' e { $$ = new ASTNode("+", $1, $3); }
   ;
 
 bool_e : e COMPARE e { $$ = new ASTNode($2, $1, $3); }
+       | func_call COMPARE e { $$ = new ASTNode($2, $1, $3); }
+       | e COMPARE func_call { $$ = new ASTNode($2, $1, $3); }
        | bool_e SI bool_e { $$ = new ASTNode($2, $1, $3); }
        | bool_e SAU bool_e { $$ = new ASTNode($2, $1, $3); }
        | '(' bool_e ')' { $$ = $2; }
@@ -1048,6 +1217,12 @@ bool_e : e COMPARE e { $$ = new ASTNode($2, $1, $3); }
            
 call_list : call_list ',' e { $$ = new ParamList($1, $3->VerifType(), "nume_var"); }
            | e { $$ = new ParamList($1->VerifType(), "nume_var", $1); }
+           | call_list ',' bool_e { $$ = new ParamList($1, $3->VerifType(), "nume_var"); }
+           | bool_e { $$ = new ParamList($1->VerifType(), "nume_var", $1); }
+           | call_list ',' TEXT { $$ = new ParamList($1, "string", "nume_var"); }
+           | TEXT { $$ = new ParamList("string", "nume_var"); }
+           | call_list ',' CARACTER { $$ = new ParamList($1, "char", "nume_var"); }
+           | CARACTER { $$ = new ParamList("char", "nume_var"); }
            | func_call { $$ = new ParamList($1->VerifType(), "nume_var"); }
            | call_list ',' func_call { $$ = new ParamList($1, $3->VerifType(), "nume_var"); }
            | /*epsilon*/ { $$ = NULL; }
